@@ -1,31 +1,55 @@
 package com.example.blue_lan.soppingcart;
 
 import android.app.Activity;
+import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends Activity implements Button.OnClickListener, AdapterView.OnItemClickListener {
-
     private List<product> datas; //數據源
     private ShopAdapter adapter; //自定義調變器
     private ListView listView;   //ListView控件
+    private TextView sumText;
+    private product product;
+
+    DataSetObserver dataSetObserver = new DataSetObserver() {
+        @Override
+        public void onChanged() {
+            super.onChanged();
+            int sum = 0;
+
+            for (int i = 0; i < datas.size(); i++) {
+                sum += datas.get(i).getPrice();
+            }
+            sumText.setText("總金額: " + sum + "元");
+        }
+
+        @Override
+        public void onInvalidated() {
+            super.onInvalidated();
+        }
+    };
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         listView = (ListView) findViewById(R.id.listView);
+        sumText = (TextView) findViewById(R.id.sum_price);
+
+
 
         // 模擬數據
-        datas = new ArrayList<product>();
-        product product = null;
+        datas = new ArrayList<>();
         for (int i = 0; i < 30; i++) {
             product = new product();
             product.setName("商品："+ i +":單價:"+ i);
@@ -35,6 +59,7 @@ public class MainActivity extends Activity implements Button.OnClickListener, Ad
         }
         adapter = new ShopAdapter(datas,this);
         listView.setAdapter(adapter);
+        adapter.registerDataSetObserver(dataSetObserver);
 
         //以上就是我们常用的自定義調變器ListView展示數據的方法了
 
@@ -50,6 +75,7 @@ public class MainActivity extends Activity implements Button.OnClickListener, Ad
 
     @Override
     public void onClick(View view) {
+
         Object tag = view.getTag();
         switch (view.getId()){
             case R.id.item_btn_add: //點擊添加數量按鈕，執行相應的處理
@@ -84,5 +110,11 @@ public class MainActivity extends Activity implements Button.OnClickListener, Ad
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         Toast.makeText(MainActivity.this,"點擊了第"+i+"個列表項",Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        adapter.unregisterDataSetObserver(dataSetObserver);
     }
 }
